@@ -1,0 +1,600 @@
+	3D GRAPHICS CHAPTER 3:	CAMERAS AND CLIPPING
+	
+		CAMERAS:
+			
+			- Dot Product is used to see how one vector projects onto another.
+			
+			  DIAGRAM:
+									V1
+									/
+								/
+							/
+						/
+					/
+				/
+				------------------------ V2
+				
+				- In the above diagram, we have 2 vectors pointing in different 
+				  directions to each other, we can draw a normal from the second 
+				  vector from the tip of the first vector. This normal will of 
+				  course be 90 degrees from V2.
+				
+									V1
+									/|
+								/	 |
+							/		 |
+						/			 |	< - normal
+					/				 |_
+				/					 | |
+				---------------------|------ V2
+				<------- d --------> |
+				
+				- In the above diagram, d is how much V1 has projected onto V2.
+				
+				- If we assume that V2 is a unit vector, i.e. it's length is 1,
+				  and we take the angle between the 2 vectors (theta), the
+				  relationship between the 2 vectors becomes clear.
+				  
+				  cos(theta) = d / length_of_V1
+				  
+				  length_of_V1 is aka magnitude of V1
+				  
+				  re-arrange:
+				  
+				  magnitude_of_V1 * cos(theta) = d
+				  
+				- BUT we do not need to do this, instead we can use the equation
+				  d = (V1.V2) / magnitude_of_V1
+						
+						V1.V2 means Dot Product
+				- 
+			
+			- In games, we can either move the player around the world or we can
+			  move the entire world around the player, both work fine. The problem
+			  with moving the entire world, is with rotation, the centre of 
+			  rotation keeps changing. So it can be better to have the player as
+			  a transform that can be moved around the world.
+			
+			CAMERA "POINT-AT" SYSTEM:
+			
+				- let's assume we have an object in 2D space. This object has an
+				  origin point and a vector that represents the forward facing 
+				  axis of the object.
+				
+				- If we wanted to make this object face something, we could 
+				  specify the angle between the object's vector and the point
+				  at which we want to face.
+				  Another option is to just translate the object's vector and
+				  have another vector pointing from the object to the point at
+				  which we want to face, we just replace the original object's
+				  vector with the new one. We can also extend this idea more.
+				  Instead of assuming we're doing everything around the origin,
+				  we can do it around the eye point. This will mean that the
+				  object can be anywhere in the 2D space and still be able to
+				  face in other directions.
+				  That is what is used in the HC-3DGraphicsEngine because it is 
+				  simpler than having to find angles.
+				
+				DIAGRAM:
+					
+					Y		  RY
+					|		  /
+					| 		 /
+					|		/		P (1, 1)
+					|	   /
+					|	  /
+					|	 /				Q
+					|   /					
+					|  /
+					| /
+					|____________________________ X
+					  \
+						\
+						  \
+							\
+							  \
+							    \ RX
+								
+					- In the above diagram, assume that the angle between RY and
+					  RX is 90 degrees
+					
+					- In this diagram, point Q is point P after rotation and RY
+					  and RX are Y and X after rotation. The angle between Y and
+					  RY is the same as the angle between P and Q if they had lines 
+					  pointing to them from the origin.
+					  What we are trying to find out is where Q is in the original
+					  space before rotation.
+					  To find this out we specify an axis as the forward
+					  direction, we will use X, this forward direction will be 
+					  represented by a unit vector. We now know anything 
+					  perpendicular to this unit vector is the equivalent Y axis.
+					  So in the new rotated space, Q is at 1,1 which is where P
+					  was in the original space, this is still not where Q is in
+					  the original space.
+					  Now we have the unit vectors for the new rotated space, we
+					  can get the individual components
+					  
+					  DIAGRAM:
+					  
+								Y		  RY
+								|	Bx	  /
+								|________/
+							|	|		/_______P (1, 1)
+							|	|	   /		|
+							|	|	  /			|
+							|	|	 /			|		Q
+						By	|	|   /			|		|
+							|	|  /			|		|
+							|	| /	<---P*Ax--->|<P*Bx> |
+							|	|____________________________ X
+								| \
+								|	\
+							 Ay |	  \
+								|		\
+								|		  \
+								____________\ RX
+									Ax		
+						
+						- In this diagram, the positions of some things have been
+						  moved around a little bit to make room for new lines
+						  and labels.
+						
+						- What the above diagram is basically saying is that:
+							
+							Qx = Ax + Bx	when P is 1, 1
+							Qy = Ay + By	when P is 1, 1
+							
+							If P is not 1, 1 then scale the calculated values
+							accordingly:
+							
+							Qx = PxAx + PyBx
+							Qy = PxAy + PyBy
+							
+							- With sets of equations like this we'd probably want
+							  to represent them as a matrix:
+							  
+								[ Px Py ] * [ Ax Ay
+											  Bx Ay	] (pretend the square brackets
+														occupy both lines)
+				
+				- All of the above calculations presume that we are rotating 
+				  around the origin, if we are not, we need a 3rd component in 
+				  the matrices:
+				  
+					[ Px Py 1 ] * [ Ax	Ay	0			A = forward vector
+									Bx	By	0			B = orthogonal
+									Tx	Ty	1 ] 		(perpendicular to forward)
+														T = translation
+									
+									(pretend the square brackets occupy all lines
+											representing the matrix)
+				- And for 3D, the above matrices would become:
+				
+					[ Px Py Pz 1 ] * [ Ax	Ay	Az	0
+									   Bx	By	Bz	0		C = orthogonal to A
+									   Cx	Cy	Cz	0		as well as B 
+									   Tx	Ty	Tz	1 ]		(perpendicular to both
+															 A and B)
+									  
+									   (pretend the square brackets occupy all
+									   lines representing the matrix)
+					
+				- We can now offset our origin point from point T. We will call
+				  this the "Point At" Matrix
+				
+				- We can use this "Point At" Matrix to position and rotate an
+				  object in our world space. So we will use it as a camera because
+				  it can look at other objects in the game.
+				  The "Point At" transformation has worked out how to transform
+				  from the origin point to any location. But a camera needs to do
+				  the exact opposite.
+				  A camera needs to take all points at any point in space and
+				  transform back to the origin. So a camera is basically the
+				  opposite of whatever the transform matrix was.
+				  Luckily, there is already an established routine to invert this
+				  matrix.
+				  
+				  Here is an example of an inverted matrix:
+				  
+					[ Ax	Ay    Az	0 
+					  Bx	By    Bz	0
+					  Cx	Cy	  Cz	0
+					  Tx	Ty	  Tz	1 ]
+					  
+					  "Point At"
+					  
+					  
+					  INVERT ->
+					  
+					[ Ax	Bx    Cx	0
+					  Ay	By	  Cy	0
+					  Az	Bz	  Cz	0
+					 -T.A  -T.B  -T.C	1 ]
+					 
+					  "Look At" Matrix
+					 
+						T.A etc means Dot Product
+					 
+					  (again, pretend the square brackets occupy all
+					   lines representing the matrices)
+		
+		
+		CLIPPING:
+		
+			- Clipping is the process of chopping a triangle up into smaller shapes.
+			
+			- Just before we discuss Clipping, we need to show the difference 
+			  between mathematician maths and programmer maths. In maths, during
+			  Secondary school years, we are taught that a straight line on a x, y
+			  axis is y = mx + c, where y and x are coordinates, m is the gradient,
+			  and c is the y intercept.
+			  This is what we programmers use to sequenctially go through x and 
+			  create y values to plot a line.
+			  Mathematicians on the other hand, y = mx + c is a concept where there
+			  is a state that the phrase y = mx + c is true, so in the big pile of
+			  x and y coordinates, there is only one set of solutions that can
+			  satisfy the truth for this equation. It just so happens that all of
+			  the solutions lay along the line.
+			  If we think of m being dy/dx (basically a vector following the line),
+			  y = mx + c becomes:
+			  
+				y = (dy/dx)x + c
+				
+				and so
+				
+				ydx = dyx + c
+				
+				and
+				
+				-dyx + ydx = c
+			
+			  Now, let's say if instead of a gradient, we have a normal to the
+			  line, inverting a gradient to a normal has been established fairly
+			  well:
+			  
+				dy/dx	becomes	   -dx/dy	or -Nx/Ny
+				
+				Nx = Normal X
+				Ny = Normal Y
+				
+			  This means that dy = -Nx and dx = Ny.
+			  
+				Before:
+					
+					-dyx + ydx = c
+					
+				After:
+				
+					xNx + yNy = c
+			  
+				
+				
+				DIAGRAM:
+						Y
+						|
+						|
+						|
+					c-> | \
+						|    \
+						|  	    \ P
+						|	       \
+						|	  	      \
+						|	   		     \
+						------------------- X
+
+							xNx + yNy = c
+							
+							becomes
+							
+							xNx + yNy = PxNx + PyNy
+							
+							becomes
+							
+							xNx + yNy - P.N = 0
+							
+							where . is Dot Product
+			  
+				  This means that by just knowing a single point on the line and the
+				  normal to the line, we can represent a line.
+				  
+				  To take this to 3D,
+					
+					xNx + yNy - N.P = 0 (2D line)
+					
+					becomes
+					
+					xNx + yNy + zNz - N.P = 0 (3D plane)
+					
+				  We can see that this is the standard plane equation:
+				  
+					Ax + By + Cz - D = 0
+				
+			- Clipping will be explained in 2D here because it's easier to draw
+			  ASCII diagrams out of
+
+			- Let's assume that that we have a line and we've got a situation
+			  where we want to draw a triangle. This triangle is being split in
+			  half by the line and we want to render the part of the triangle
+			  that is on one side of the line and not render the rest of the
+			  triangle which is on the other side of the line.
+			  We have to split the triangle.
+			  
+			  DIAGRAM:
+			  
+				____\______
+				 \XXX\	  |
+				   \XX\	  |
+					 \X\ _|
+					    \
+						 \
+						  \
+						   \
+						    \
+
+				The side of the triangle we do not want to render is filled with
+				Xs, the other side is no longer a triangle and is now a quad.
+				(use your imagination, it is very hard to display this in ASCII,
+				their is also a picture explaining this in the same directory as
+				the book).
+				We need to split this quad into 2 triangles.
+				We can do this by counting how many vertexs lay on the inside of
+				the line, and how many points on the outside.
+				If we have a triangle which has all 3 points on the outside of the
+				line, we do not want to render it and if we have a triangle with
+				all 3 points on the inside, then we want to keep it rendered and
+				do nothing with it.
+				
+				Simple pseudocode (not really) algorithm:
+				
+					If inside_vertex_count == 3:
+						do nothing
+					If inside_vertex_count == 0:
+						reject whole triangle
+					If inside_vertex_count == 2;
+						form quad
+					If inside_vertex_count == 1:
+						form triangle
+						
+				If we are forming a single triangle, we can form that triangle out
+				of the original triangle's inside point and the 2 points where the
+				original edges of the triangle cross the clipping line. It is also
+				important to remember to form the triangle with the original
+				clockwise order of vertices.
+				
+				If we are forming 2 triangles, to form the 1st triangle we use the
+				2 original imside points and make a triangle with one of the 
+				points where the triangle edge intersects the clipping line.
+				We form the second triangle by taking one original point and 2 of
+				the new points (making sure to choose the right original point so
+				as to not get 2 overlapping triangles and a vacant space where 
+				part of the original triangle used to be).
+			
+			- We want to clip triangles against the edges of the screen. This 
+			  means we have to clip say with the left first, then the top, the
+			  right and the bottom individually.
+			
+			- Pseudocode method for clipping (Q is basically an array with
+			  triangles):
+
+			
+				Q add triangle
+				
+				for each plane
+					for each triangle in Q
+						T = Q front triangle
+						newT = clip(T, plane)
+					next triangle
+					Q = newT
+				next plane
+			
+			
+			- C++ method for clipping (see HC-3DGraphicsEngine):
+			
+				vec3d Vector_Add(vec3d &v1, vec3d &v2)
+				{
+					return { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
+				}
+
+				vec3d Vector_Sub(vec3d &v1, vec3d &v2)
+				{
+					return { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
+				}
+
+				vec3d Vector_Mul(vec3d &v1, float k)
+				{
+					return { v1.x * k, v1.y * k, v1.z * k };
+				}
+			
+				float Vector_DotProduct(vec3d &v1, vec3d &v2)
+				{
+					return v1.x*v2.x + v1.y*v2.y + v1.z * v2.z;
+				}
+				
+				float Vector_Length(vec3d &v)
+				{
+					return sqrtf(Vector_DotProduct(v, v));
+				}
+
+				vec3d Vector_Normalise(vec3d &v)
+				{
+					float l = Vector_Length(v);
+					return { v.x / l, v.y / l, v.z / l };
+				}
+			
+				vec3d Vector_IntersectPlane(
+											vec3d &plane_p, vec3d &plane_n,
+											vec3d &lineStart, vec3d &lineEnd
+											)
+				{
+					plane_n = Vector_Normalise(plane_n);
+					float plane_d = -Vector_DotProduct(plane_n, plane_p);
+					float ad = Vector_DotProduct(lineStart, plane_n);
+					float bd = Vector_DotProduct(lineEnd, plane_n);
+					float t = (-plane_d - ad) / (bd - ad);
+					vec3d lineStartToEnd = Vector_Sub(lineEnd, lineStart);
+					vec3d lineToIntersect = Vector_Mul(lineStartToEnd, t);
+					return Vector_Add(lineStart, lineToIntersect);
+				}
+				
+				int Triangle_ClipAgainstPlane(
+											vec3d plane_p, vec3d plane_n,
+											triangle &in_tri, triangle &out_tri1,
+											triangle &out_tri2
+											)
+				{
+					// Make sure plane normal is indeed normal
+					plane_n = Vector_Normalise(plane_n);
+
+					// Return signed shortest distance from point to plane, plane
+					// normal must be normalised
+					auto dist = [&](vec3d &p)
+					{
+						vec3d n = Vector_Normalise(p);
+						return (plane_n.x * p.x + plane_n.y * p.y + 
+								plane_n.z * p.z - 
+								Vector_DotProduct(plane_n, plane_p));
+					};
+
+					// Create two temporary storage arrays to classify points 
+					// either side of plane. If distance sign is positive, point
+					// lies on "inside" of plane
+					vec3d* inside_points[3];  int nInsidePointCount = 0;
+					vec3d* outside_points[3]; int nOutsidePointCount = 0;
+
+					// Get signed distance of each point in triangle to plane
+					float d0 = dist(in_tri.p[0]);
+					float d1 = dist(in_tri.p[1]);
+					float d2 = dist(in_tri.p[2]);
+
+					if (d0 >= 0) { 
+						inside_points[nInsidePointCount++] = &in_tri.p[0];
+					}
+					else {
+						outside_points[nOutsidePointCount++] = &in_tri.p[0];
+					}
+					if (d1 >= 0) {
+						inside_points[nInsidePointCount++] = &in_tri.p[1];
+					}
+					else {
+						outside_points[nOutsidePointCount++] = &in_tri.p[1];
+					}
+					if (d2 >= 0) {
+						inside_points[nInsidePointCount++] = &in_tri.p[2];
+					}
+					else {
+						outside_points[nOutsidePointCount++] = &in_tri.p[2];
+					}
+
+					// Now classify triangle points, and break the input triangle
+					// into smaller output triangles if required. There are four 
+					// possible outcomes...
+
+					if (nInsidePointCount == 0)
+					{
+						// All points lie on the outside of plane, so clip whole 
+						// triangle. It ceases to exist
+
+						return 0; // No returned triangles are valid
+					}
+
+					if (nInsidePointCount == 3)
+					{
+						// All points lie on the inside of plane, so do nothing
+						// and allow the triangle to simply pass through
+						out_tri1 = in_tri;
+
+						return 1; // Just the one original triangle is valid
+					}
+
+					if (nInsidePointCount == 1 && nOutsidePointCount == 2)
+					{
+						// Triangle should be clipped. As two points lie outside
+						// the plane, the triangle simply becomes a smaller 
+						// triangle
+
+						// Copy appearance info to new triangle
+						out_tri1.col =  in_tri.col;
+						out_tri1.sym = in_tri.sym;
+
+						// The inside point is valid, so keep that...
+						out_tri1.p[0] = *inside_points[0];
+
+						// but the two new points are at the locations where the 
+						// original sides of the triangle (lines) intersect with 
+						// the plane
+						out_tri1.p[1] = Vector_IntersectPlane(plane_p, plane_n,
+												*inside_points[0], 
+												*outside_points[0]);
+						out_tri1.p[2] = Vector_IntersectPlane(plane_p, plane_n,
+												*inside_points[0], 
+												*outside_points[1]);
+
+						return 1; // Return the newly formed single triangle
+					}
+
+					if (nInsidePointCount == 2 && nOutsidePointCount == 1)
+					{
+						// Triangle should be clipped. As two points lie inside
+						// the plane, the clipped triangle becomes a "quad". 
+						// Fortunately, we can represent a quad with two new
+						// triangles
+
+						// Copy appearance info to new triangles
+						out_tri1.col =  in_tri.col;
+						out_tri1.sym = in_tri.sym;
+
+						out_tri2.col =  in_tri.col;
+						out_tri2.sym = in_tri.sym;
+
+						// The first triangle consists of the two inside points 
+						// and a new point determined by the location where one
+						// side of the triangle intersects with the plane
+						out_tri1.p[0] = *inside_points[0];
+						out_tri1.p[1] = *inside_points[1];
+						out_tri1.p[2] = Vector_IntersectPlane(plane_p, plane_n,
+												*inside_points[0], 
+												*outside_points[0]);
+
+						// The second triangle is composed of one of he inside 
+						// points, a new point determined by the intersection of 
+						// the other side of the triangle and the plane, and the
+						// newly created point above
+						out_tri2.p[0] = *inside_points[1];
+						out_tri2.p[1] = out_tri1.p[2];
+						out_tri2.p[2] = Vector_IntersectPlane(plane_p, plane_n,
+												*inside_points[1],
+												*outside_points[0]);
+
+						return 2; // Return two newly formed triangles
+					}
+				}
+				
+				LATER ON IN UPDATE/GAMELOOP FUNCTION:
+				
+				// clip viewed triangle against near plane, this could from 2 
+				// additional triangles
+                int nClippedTriangles = 0;
+                triangle clipped[2];
+                nClippedTriangles = Triangle_ClipAgainstPlane({ 0.0f, 0.0f, 0.1f },
+					{ 0.0f, 0.0f, nearPlane }, triViewed, clipped[0], clipped[1]);
+					
+				for (int n = 0; n < nClippedTriangles; n++)
+                {
+					// project triangles from 3d to 2d by multiplyinh the
+					// projection matrix with the clipped triangle at point n
+					// set colour of projected triangles
+					
+					// normalise the coordinates manually
+					
+					// dis-invert projection triangle x and y as they are inverted
+					
+					// scale into view
+					
+					// store triangle in trianglesToRender array/std::vector
+					
+				}
+
+
+SOURCES:
+
+	- https://youtube.com/watch?v=HXSuNxpCzdM - Code It Yourself - 3D Graphics Engine Part#3 - Cameras and clipping

@@ -1,0 +1,78 @@
+GAME MATHEMATICS V2
+	ESSENTIAL MATHEMATICS CHAPTER 1:	PYTHAGORAS' THEOREM
+	
+		- Pythagoras' Theorem is a mathematical theorem that works with right
+		  angle triangles. 
+
+		BASICS:
+		
+			- With a right angle triangle, we can find the length of the longest
+			  side by adding the 2 other sides squared and then square rooting 
+			  the result.
+			  
+			  DIAGRAM:
+			  
+							h       /	|
+								/		|
+							/			|
+						/				|	o
+					/	)				|
+				   ----------------------
+							a
+							
+				- To find the length h, we add o^2 and a^2. We then square root 
+				  the result and we have length h.
+				  
+				- So, for example, let's say o is 3 and a is 4:
+				
+					3^2 = 9
+					4^2 = 16
+					
+					9 + 16 = 25
+					
+					square root of 25 is 5 and so the length of side h is 5.
+					
+				- Now the reasons for the sides being h, o and a are:
+				
+					h - the hypoteneuse, is the longest side and is not connected
+						to the 90 degree angle
+					
+					o - because it is opposite to the angle (marked by the ) in 
+						the diagram)
+						
+					a - because it is adjacent (next to) the angle.
+		
+		WHERE THIS IS USED:
+		
+			- One example is, if we were working on a 2D game, and the screen is
+			  represented as a per x and y axis (where x is across and y is up).
+			  Let's say we wanted to measure the distance between 2 points on the
+			  screen, say the player is at (Px, Py) and to the right and up, the 
+			  enemy is at (Ex, Ey), we can find out the distance on the Y axis by 
+			  subtracting Py from Ey. We can also do the same for the other side,
+			  The distance along the X axis would be Ex - Px.
+			  So to find the distance, the following calculation would have to be
+			  done:
+			  
+				distance = squareRoot((Ey - Py)^2 + (Ex - Px)^2)
+			  
+			  This can also be used if the enemy and the player were in swapped 
+			  positions, the calculation of the distance on the Y and X axes would
+			  have to be swapped around accordingly.
+			  
+			  These calculations can also be used in 3D, but instead of
+			  
+				c = squareRoot(a^2 + b^2)
+			  
+			  It would be
+			  
+				c = squareRoot(a^2 + b^2 + x^2)
+
+SOURCES:
+
+	- https://www.youtube.com/watch?v=DPfxjQ6sqrc	-	Essential Mathematics for
+	  Aspiring Game Developers
+	  
+RESOURCES:
+
+	- https://en.wikipedia.org/wiki/Pythagorean_theorem

@@ -1,0 +1,210 @@
+	ESSENTIAL MATHEMATICS CHAPTER 2:	VECTORS:
+		
+		- A vector is a mathematical idea that describes a point in space and
+		  directions, they can point in any direction and be any length long.
+		  Usually vectors (when written down in equations) have a little arrow
+		  above them that almost looks like an upside down ¬ but the small line
+		  is diagonal. It is also a convention to display the contents of a vector
+		  in a column. For example:
+		  
+			¬
+			V = [x]
+				[y]
+			
+			- Pretend the square brackets are across both lines of the Vector's
+			  column, I cannot display that in a text editor.
+			  Also we will be using ¬ to display vectors in this book
+		
+		- Not to be confused with std::vector in C++ and Vector in Java
+		
+		  DIAGRAM:
+										y
+										^
+									   / \
+										|
+										|
+										|
+										|_______P
+										|		|
+										|		|
+										|		|
+			 -x ----------------------------------------------------- x
+										|
+										|
+										|
+										|
+										|
+										|
+										|
+										\/
+										-y
+				
+			- In this diagram point P's position is found by P's distance
+			  from the origin (0, 0) along the X axis, and the distance 
+			  from the origin along the Y axis.
+			  
+			- Point P can also be seen as a distance travelled from the
+			  origin to P's location. If we always assume that the vector
+			  starts at the origin, we only need to know the point's 
+			  position.
+			  If we think about things this way, then what we've just 
+			  described is a vector.
+		
+		- The key thing to remember about vectors is that they have a length and
+		  a direction.
+		  
+		- To calculate the length of a vector, we can display it on a graph like
+		  below.
+		  
+		  DIAGRAM:
+			
+										Y
+										|
+										|
+										|  xd
+										|____
+										|  / |
+										| /  | yd
+			 -X ________________________|/___|___________________ X
+										|
+										|
+										|
+										|
+										|
+										|
+										-Y
+			- In the above diagram, the diagonal line in the box is a vector, and
+			  yd is the distance of the vector end point from the origin along the
+			  Y axis, and xd is the distance of the vector from the origin along the
+			  X axis, hopefully you can see that we have a right angle triangle with
+			  the hypoteneuse as the vector, yd as one of the lines and the x axis
+			  (same length as xd) as another one of the lines.
+			  If we know the length of yd and xd we can use some basic trigonometry
+			  (see chapter 1) and calculate that:
+			  
+				vectorLength = squareroot(yd^2 + xd^2)
+		
+		- Vectors can be added and subtracted, so let's say that we create
+		  another vector which starts at the point where the vector in the above
+		  diagram stops and goes at a different angle, we do the same at the end
+		  point of this new vector (but this time going in the negative X 
+		  direction) and once again (also in the negative X direction). We always
+		  assume that a vector in isolation starts at 0,0 and when we add vectors
+		  together, we assume the end point of the vector it starts at is 0,0.
+		  It is very simple to add vectors, if we wanted to find out the location
+		  of the point the last vector stops at, we can add up all of the vectors
+		  on the path to this end point. Therefore we can say that
+			
+							¬	 ¬	  ¬	   ¬
+			finalEndPoint = V1 + V2 + V3 + V4
+		
+		  To add these vectors, we add the common components of each vector, so we
+		  add all of the x components together, all of the y components together
+		  and so on. Explanation:
+		  
+							¬	 ¬	  ¬	   ¬
+			finalEndPoint = V1 + V2 + V3 + V4
+			
+			finalEndPoint = [x]  [x]  [x]  [x]
+							[y]  [y]  [y]  [y]
+							
+			finalEndPoint = [x  + x  + x  + x]
+							[y  + y  + y  + y]
+		
+		  The addition of the 4 vectors returns finalEndPoint as a vector. This 
+		  is correct because the finalEndPoint is still a point in 2D space
+		  and is also a vector thats starts from the actual origin.
+		  
+		- Lets say we have a player character which is walking along a path and
+		  visits all of the end points of all of the 4 vectors. We can describe
+		  quite nicely this path in 2D with a vector. We can also add up the 
+		  lengths of all the vectors to see how far the player has walked by
+		  working out the magnitude of each vector as we go along. After we have
+		  finished walking along this path, because we have got a resultant vector
+		  (finalEndPoint) we can work out the length of that vector to calculate
+		  how far we are from our starting position.
+		  
+		- The same stuff we did for adding vectors can be done in reverse to
+		  subtract vectors, instead of adding each common component, we subtract
+		  each common component.
+		  
+		- But what do we do if we don't care about the length of the vector, but
+		  we want to calculate the direction of the vector? We are going to lose
+		  the scaler value of the vector. But we cannot just remove the length of
+		  the vector, the best thing we can try and do is assume that the length
+		  is 1.
+		  Vectors that have a length of 1, are special, they are called unit
+		  vectors. A normal vector can be converted into a unit vector by a 
+		  process called normalising.
+
+		HOW TO NORMALISE A VECTOR:
+			
+			- Fundamentaly our vector splits a square in
+			  half into 2 right angle triangle as shown in the diagram above the
+			  vector addition demonstration.
+			  We know that we can calculate the length/magnitude of a vector by using
+			  Pythagoras's theorem.
+			  If we were to assume that the original length of the vector was 10 and
+			  we now normalise it to a unit vector, the direction of the vector 
+			  remains the same, but we have changed our X and Y values (we are 
+			  assuming 2D space for this, just add extra terms for 3D space). Because
+			  of the proportionality effects of right angled triangles, the new X and
+			  Y values become as follows:
+			  
+				newX = originalX/originalLength
+				
+				newY = originalY/originalLength
+			
+			  This also means the sides of the triangle have also had the same done to
+			  them:
+			  
+				newA = originalA/originalLength
+				
+				newB = originalB/originalLength
+				
+				newC = originalC/originalLength
+				  
+			  This means if we can calculate the original length of the vector, and
+			  divide that vector's components by originalLength, we can establish the
+			  unit vector. Instead of a unit vector being scribed the same as a normal
+			  vector, unit vectors are scribed as so:
+			  
+				^
+				V
+			
+			  Almost like a V with a small triangular hat above it.
+			  We can now infer that a unit vector is:
+			  
+				^
+				V = [ x / squareroot(x^2 + y^2)]
+					[ y / squareroot(x^2 + y^2)]
+			
+			  Therefore by taking our original vector and dividing its components by
+			  the original length, we get our unit vector which has a length of 1.
+			
+		- Unit vectors have many uses, the most obvious being that it can be 
+		  scaled very easily.
+		  Lets say we wanted to find a point along the direction of our vector,
+		  but that number must be (let's pick a random number) 6.5 in length away
+		  from the origin, instead of having to do multiple complicated 
+		  calculations to do, we can simply multiply our unit vector's components
+		  by 6.5.
+		  
+		  In games, unit vectors are amazing for specifying direction. So let's
+		  say we have a car which is at the origin, we can represent the direction
+		  this car is going in as  a unit vector. The distance that the car 
+		  travels can be represented as the distance, a scaler value, we do not
+		  need to know the direction, the direction is included in this unit
+		  vector, the distance is what we'll scale the unit vector by to work
+		  out where the car will be in the future. We know that the distance can
+		  be anywhere along the distance of the direction vector and to work out
+		  where the car will be in the future, we just scale our unit vector by
+		  the distance that we're interested in.
+		
+		
+		
+			  
+			
+RESOURCES:
+
+	- https://www.mathsisfun.com/algebra/vectors.html - vectors

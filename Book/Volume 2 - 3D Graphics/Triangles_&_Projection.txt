@@ -1,0 +1,352 @@
+3D GRAPHICS V1: TRIANGLES AND PROJECTION
+
+	TRIANGLES:
+
+		- When a 3D object is rendered to the screen, it is not
+		  actually 3D because the screen is 2D. What 3D rendering
+		  actually is, is having multiple 2D shapes and trying to
+		  create the illusion of 3D.
+
+		- For Example:
+				 ________________
+				/			    /|
+		       /	           / |
+		      /		          /  |
+		     /		         /   |
+		    /_______________/    |
+		    |		    	|    |
+		    |		    	|    /
+		    |			    |   /
+		    |			    |  /
+		    |			    | /
+		    |_______________|/
+		
+		  This cube looks 3D, but it is actually made out of
+		  6 2D squares (use your imagination as this is made
+		  out of slashes ' / ', vertical slashes ' | ' and 
+		  underscores ' _ '), the top, the bottom, the front,
+		  the back, the left and the right.
+		
+		  This cube is made out of 8 vertices (one we can't
+		  see at the angle the cube is drawn at).
+
+		  These vertices are grouped into triangles. Each 
+		  square face on the triangle is made of 2 triangles.
+
+		  Triangles are chosen because they are the simplest
+		  2D shape and so can be used to make any 3D shape.
+
+		  There are optimised methods of drawing triangles and
+		  filling them in and changing colour and lighting
+
+
+		  CONVENTIONS:
+			
+			The front facing face of this cube would be
+			South whereas the back would be north, the
+			right would be East and the left would be 
+			West.
+
+			The triangle vertices have an order. Usually
+			aa clockwise direction would be chosen. IE:
+
+			A_________________________________B
+			 |			     			    /
+			 |			   			     /
+			 |						  /
+			 |			           /
+			 |		           /
+			 |		       /
+			 |		   /
+			 |	   /
+			 | /
+			 C
+
+			The above triangle has the clockwise order of 
+			ABC
+
+
+
+	The Job of a 3D Graphics Engine:
+
+		- A 3D graphics engine takes 3D Geometrical data and
+		  turns it into our 2D shapes that give us the illusion
+		  of 3D
+
+
+	PROJECTION MATRICES:
+
+		- A projection matrix condenses the 3D space of the
+		  game/app to the 2D space of the screen.
+
+
+		EXPLANATION:		
+
+			2D SCREEN:
+								    -1
+				_________________________________________
+				|					|					|
+				|					|					|
+				|					|					|
+				|					|					|
+				|					|					|
+			 -1 |---------------------------------------| 1
+				|					|					|
+				|					|					|
+				|					|					|
+				|					|					|
+				-----------------------------------------
+								    1
+				
+				aspectRatio = width / height (video said height / 
+				width but I think this is wrong as he states different
+				later on)
+				
+				Vector3 = [x, y, z]
+				
+				INTO 2D SPACE:
+				
+				[ aspectRatio * x, y, z ]
+				
+				
+				
+			FOV:
+			
+			   -1							  1
+				\							  /
+				 \							 /
+				  \							/
+				   \					   /
+				    \					  /
+					 \					 /
+					  \					/
+					   \			   /
+					    \			  /
+						 \___________/		<- screen
+						 -1			 1
+							\		/
+							   EYE
+							   
+				- The smaller the FOV is, the more of a zoomed in 
+				  effect is given, the further out it is, the more
+				  of a zoomed out effect is given off.
+				  
+				- A scaling factor relates to the FOV
+				  
+				-1							  1
+				\							  /
+				 \							 /
+				  \							/
+				   \					   /
+				    \					  /
+					 \					 /
+					  \		   _		/
+					   \    -     -	   /
+					    \/	theta	 \/
+						 \___________/
+						  \			/
+						   \	   /
+						   
+						In the above diagram, the FOV is theta.
+						
+						One way to think of a scaling factor is to
+						look at the below diagram
+					
+				
+				FOR THE SAKE OF THIS DIAGRAM, degrees is ^
+				
+			   -1______________________________ 1
+				\	  90^ -> |_|_| <- 90^ 	  /
+				 \			   |			 /
+				  \			   |			/
+				   \		   |		   /
+				    \		   |		  /
+					 \		   |		 /
+					  \		   _		/
+					   \    -  |  -	   /
+					    \/	   | 	 \/
+						 \_____|_____/
+						  \			/
+						   \	   /
+				
+					The scaling factor is tan(FOV / 2)
+					
+					If we were to increase the FOV, the scaling
+					factor would increase and vice versa for
+					decreasing FOV.
+					This means we will have the problem of displacing
+					all of our objects outside of our FOV, if we
+					increase the FOV.
+					We do not want this as when we increase the FOV,
+					we actually want to see more.
+					
+				
+					SO:
+						- our Vector3 from earlier has to have more
+						  changes done in the projection calculations
+						  to get the 3D space onto our 2D screen.
+						  
+						  
+							Vector3 = [x, y, z]
+							
+							INTO 2D SPACE:
+							
+							[ aspectRatio * f * x,		f * y,		z ]
+							
+							where f = 1 / tan(FOV / 2)
+
+
+					SCALING COEFFICIENT FOR Z:
+						
+							^		______________________________			 ^
+					  z+   / \		\							 /			/ \ zFar
+							|		 \						    /			 |
+							|		  \						   /			 |
+							|		   \					  /				 |
+							|			\					 /				 |
+							|			 \				    /				 |
+							|			  \				   /				 |
+							|			   \______________/					 |
+					  z-   \ /												\ / zNear
+							  
+							  zFar = distance from player's head to the furthest
+									 distance viewed in the 3D space.
+
+							  zNear = distance from player's head to the front
+									  of the screen.
+
+						- Lets say zFar is 10 and zNear is 1. To
+						  figure out where a point is in the 3D
+						  space, first we need to scale it to a
+						  normalised system. In this case,
+						  zFar - zNear = 9
+						  so we divide the point by 9, this will
+						  give us a point between 0 and 1, but as
+						  our zFar is 10, we need to scale that up
+						  again by doing:
+						  
+						  scale = zFar / (zFar - zNear)
+						  
+						  BUT we still need to offset the transformed
+						  point because of the space between the
+						  player's head and the front of the screen.
+						  We can offset the transformed point by the
+						  space between the player's head and the
+						  screen by doing:
+						  
+						  (zFar * zNear) / (zFar - zNear)
+						  
+						  
+						  
+					SO THE FINAL PROJECTION OF THE VECTOR3 IS:
+					 
+						3D:
+							[x, y, z]
+						
+						2D:
+							[ 
+								( screenWidth / screenHeight ) * ( 1 / tan( FOV / 2 ) * x,					// X
+								( 1 / tan( FOV / 2 ) * y,													// Y
+								z * ( zFar / ( zFar - zNear ) - ( ( zFar * zNear) / ( zFar - zNear ) ) )	// Z
+							]
+								
+						BUT WE HAVEN'T TAKEN INTO ACCOUNT THAT
+						THINGS GET SMALLER THE FURTHER AWAY FROM
+						THEM YOU GET, SO:
+							  
+						x' = x / z
+							  
+						As z gets bigger, x gets smaller, they are
+						inversely proportional to each other.
+							  
+						y' = y / z
+
+						same as x but y instead of x.
+							  
+
+				    THE ACTUAL FINAL PROJECTION IS:
+					
+					
+						3D:
+							[x, y, z]
+						2D:
+						
+							[
+								((screenWidth / screenHeight) * (1 / tan(FOV / 2) * x)) / z,			//X
+								((1 / tan(FOV / 2) * y)) / z,											//Y
+								z * (zFar / (zFar - zNear)) - ((zFar * zNear) / (zFar - zNear))			//Z
+							]
+						
+						SIMPLER FORM:
+							
+							a = screenWidth/screenHeight
+							f = 1 / tan( FOV / 2 )
+							q = zFar / (zFar - zNear)
+							
+							[
+								afx / z,	//X
+								fy / z,		//Y
+								zq - zNear * q
+							]
+
+
+	MATRIX MULTIPLICATION:
+		
+		a = screenWidth/screenHeight
+		f = 1 / tan( FOV / 2 )
+		q = zFar / (zFar - zNear)
+		
+		[ x, y, z ]
+		
+		matrix:
+			
+			[	//X		//Y		//Z
+				af		 0		0
+				0		 f		0
+				0		 0		q
+			]
+	
+		what we are doing:
+			Multiplying parts of the vector to parts of the matrix
+			
+			We have to multiply the z component of the vector with
+			the offset we talked about earlier. But this means we
+			need 4 columns of data in the matrix and their are only
+			3 elements in the vector. this means we will have to add
+			a 4th element to the vector, in this case 1.
+			
+			But there is still a problem
+
+		result:
+		
+			before:
+				
+				[x, y, z, 1]
+				
+				and
+				
+				
+				[	//X		//Y		   //Z		//to get normalised Z
+					af		 0			0				0
+					0		 f			0				0
+					0		 0			q				1
+					0		 0		-zNear*q			0
+				]
+			
+			after:
+			
+				[ afx / z, fy / z, (zq - zNear * q) / z, z ]
+			
+			
+	
+SOURCES:
+
+https://www.youtube.com/watch?v=ih20l3pJoeU
+ - Code-It-Yourself! 3D Graphics Engine Part #1 - Triangles & 
+   Projection
+   
+	- javidx9
+   
+OTHER SOURCES TO LOOK AT:
+
+	- javidx9 Code It Yourself asteroids	-	Matrix Multiplication

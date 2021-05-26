@@ -1,0 +1,286 @@
+NORMALS, CULLING, LIGHTING AND OBJECT FILES
+
+	NORMALS:
+		
+		- All shapes in graphics programming are made of triangles.
+		- Our 3D Cube has a clockwise winding for example:
+			
+			Triangle on any face of the cube:
+				
+				   A_________________________B
+					|						/
+					|					 /
+					|				  /
+					|			   /
+					|			/
+					|		 /
+					|	  /
+					|  /
+					|/
+					C
+				
+				- This triangle is wired in the order ABC.
+		
+		- Graphics engines exploit 2 main things: Vertex Geometry and
+		  Surface Normals.
+		- A normal is an imaginary line that is perpendicular (90
+		  degrees) to the plane that the triangle is on.
+		
+			DIAGRAM OF A NORMAL:
+								^
+							   / \
+								|		<- normal
+				90 degrees	->	|
+				____________________________________	<- plane
+		
+		GEOMETRIC TECHNIQUES FOR GETTING NORMALS:
+		
+			- Given 2 lines in a plane perpendicular to each other,
+			  the normal can be shown as a 3rd line pointing upwards
+			  at the point at which the 2 lines on the plane collide
+			  
+			  DIAGRAM:
+			  
+			  normal
+				|
+			   \ /
+			   
+				|	 /	<- line A
+				|	/
+				|  /
+				| /
+				|/___________ <- line B
+		
+				(Imagine the angle between line A and B, line A and
+				the normal and line B and the normal is 90 degrees,
+				I can't draw accurately with ASCII art)
+			
+			- In 3D, there is a mathematical function to generate the
+			  normal. This is called the Cross Product.
+			- This Cross Product will always give us the line that is
+			  perpendicular to both line A and B.
+			
+			CROSS PRODUCT:
+				- Each line and normal is a 3D vector, so:
+				
+					Where capital letters are the vector and the lower
+					case letters are the respective component of the vector
+					
+					Nx = Ay * Bz - Az * By
+					Ny = Az * Bx - Ax * Bz
+					Nz = Ax * By - Ay * Bx
+				
+				- To get the lines:
+				
+					- in the triangle you have points pA, pB and pC, to get
+					  the line A (in a clockwise winding):
+					  
+						pB - pA
+						
+					  and line B (also in a clockwise winding):
+						
+						pC - pA
+					
+				
+				- Why is a surface normal important?
+				
+					DIAGRAM:
+					
+						
+					y axis->	|	 /	<- z axis
+								|	/
+								|  /
+								| /
+								|/___________ <- x axis
+								
+						- Any triangle that has a normal going off into
+						  the negative z direction, we can see it, as
+						  the negative z direction is facing the screen,
+						  otherwise, we cannot see it.
+	CULLING:
+	
+		- In the HC-3DGraphicsEngine, culling was done by saying:
+		
+			if(normal.z < 0)	// if normal z component is negative
+			{
+				// project and draw triangles
+			}
+			
+		- This does work, however it does render some triangles
+		  behind that are just on the edge. We need to eliminate this,
+			
+		- the reason why some sides are still shown is that while
+		  their normals' z components are facing in the negative
+		  z direction, they are out of the Field Of View and 
+		  therefore we are't meant to see those triangles, but
+		  they are still being rendered and so we need to sort 
+		  this out.
+		
+		- we need to detect how much of the normal is in line with
+		  the imaginary line cast from the viewing position to the
+		  normal's position.
+		  
+		- we can calculate wether a triangle is seen or not by casting
+		  imaginary lines from within the FOV from the screen to the 
+		  object and if the angle between the normal and the casted
+		  line is less than 90 degrees, then we can see it.
+		  The problem with this is that when we deal with angles in
+		  3D space, it can get a bit complicated.
+		  So we make an assumption that what we are looking for is
+		  how similiar the normal is to the line between the camera 
+		  and where the normal exists.
+		  Luckily there is another mathematical function we can use
+		  which is called the Dot Product.
+		
+		DOT PRODUCT:
+		
+			- The Dot Product is a scaler value, a single number that
+			  tells us how similiar 2 vectors are.
+			  
+			  D = 3D Dot Product
+			  A, B = 3D vectors
+			  x, y, z = individual components of their respective vector
+			  
+				D =  Ax * Bx  +  Ay * By  +  Az * Bz
+			
+				So say that;
+				
+					A = (1, 0, 0)
+					B = (0, 1, 0)
+					
+					- These 2 vectors are not similiar at all, so 
+					  using the above Dot Product equation,
+					  
+						  
+						  
+						  Dx = Ax * Bx
+						  
+						  or
+						  
+						  Dx = 1 * 0
+						  
+						  Dx = 0
+						  
+						  
+						  
+						  
+						  Dz = Az * Bz
+						  
+						  or
+						  
+						  Dz = 0 * 0
+		
+						  Dz = 0
+						  
+						  
+						  
+						  
+						  Dy = Ay * By
+						  
+						  or
+						  
+						  Dy = 0 * 1
+						  
+						  Dy = 0
+						  
+						  
+						  - This concludes that the Dot Product is
+						    (0, 0, 0) and therefore A and B are not similiar
+				
+				Now let's say that;
+				
+					A = (1, 0, 0)
+					B = (1, 0, 0)
+					
+					- Using the Dot Product equation,
+					
+						
+						Dx = Ax * Bx
+						
+						or
+						
+						Dx = 1 * 1
+						
+						Dx = 1
+						
+						
+						
+						Dy = Ay * By
+						
+						or
+						
+						Dy = 0 * 0
+						
+						Dy = 0
+						
+						
+						
+						Dz = Az * Bz
+						
+						or
+						
+						Dz = 0 * 0
+						
+						Dz = 0
+						
+						
+						
+						- So filling in the results into the vector,
+						  we see that the Dot Product is (1, 0, 0).
+						  This means A and B are similiar.
+					
+				Now let's say that;
+				
+					A = (1, 0, 0)
+					B = (-1, 0, 0)
+					
+					DIAGRAM:
+					
+					 -1 <---------------------0--------------------> 1
+											  |
+					-1 will give us a Dot	  |		1 will give us a
+					Product of 1.			  |		Dot Product of -1
+											  |
+											  |
+											  |
+											  |
+											 \ /	Not pointing in 
+													the same direction
+													at all will give us
+													0
+													
+				Conclusion:
+				
+					- If we find the Dot Product of 2 Vectors has a 
+					  component of 1, then that component of each of
+					  the 2 vectors is similiar.
+					  If the component is -1, the components of the
+					  2 vectors are pointing in the opposite direction
+					  to each other.
+					  If the component is 0, then the components of
+					  the 2 vectors are completely different
+					  
+					  EXAMPLE:
+					  
+						- Say the Dot Product is (1, 0, 0), then the
+						  X component of each of the 2 vectors are 
+						  similiar.
+						  If the Dot Product is (0, -1, 0), then the
+						  Y component of each of the 2 vectors are
+						  pointing in the opposite direction of each
+						  other.
+						  If the Dot Product is (0, 0, 0), then none
+						  of the components of the 2 vectors are
+						  similiar.
+						  
+		
+RESOURCES:
+	
+	- Cross Product - https://en.wikipedia.org/wiki/Cross_product
+	- Dot Product - https://en.wikipedia.org/wiki/Dot_product
+	
+SOURCES:
+
+	- https://www.youtube.com/watch?v=XgMWc6LumG4	-	Code It 
+	  Yourself 3D Graphics Engine Part#2 - Normals, Culling, Lighting
+	  & Object Files

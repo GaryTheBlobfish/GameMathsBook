@@ -1,0 +1,149 @@
+	ESSENTIAL MATHEMATICS CHAPTER 3:	ANGLES:
+	
+		- In a right angle triangle, we know that one angle is 90 degrees. If we
+		  wanted to work out what size another angle was we would call that angle
+		  theta.
+		  
+		  DIAGRAM:
+											Y
+											|_X
+									/|
+								 /	 |
+							  /	 	 |
+						   /)		_|
+				theta -> /____)____|_| <- 90 degrees
+				(within the brackets)
+			
+			- The longest side of  a triangle is always called the hypoteneuse.
+			  In the diagram above, The line going vertically up will be called
+			  the opposite, this is because it is opposite to the angle we are
+			  trying to work out. The line going horizontal along the bottom will
+			  be called the adjacent because it is next to the angle (adjacent 
+			  means next to) and is not the longest side.
+			  
+			- tan(theta) = opposite/adjacent.
+			  
+			  And so therefore:
+			  
+			  theta = tan-1(opposite/adjacent)
+			  
+			  where tan-1() is inverese tan()
+			  
+			  In a lot of programming languages (including C++) tan-1 is atan().
+			  This is not only for tangent, this is the same for sine and cosine,
+			  
+			  asin = sin-1()
+			  
+			  acos = cos-1()
+			  
+			  So to work out theta in C++:
+			  
+			  float theta = atan(opposite/adjacent);
+			  
+			  theta can also be a double.
+			  
+			- When we see a divide like opposite/adjacent, we need to make sure 
+			  that the denomenator (the bottom number in a fraction) is not 0,
+			  this is because we know that the internal angles of any triangle
+			  should add up to 180 degrees, but if one length of the triangle is
+			  0, we don't have a triangle, we have 2 lines on top of each other.
+			  If we divide by 0, we get a divide by 0 error and the program will
+			  crash or heavily glitch. So we need to have some level of safety when
+			  dividing.
+			  Luckily many programming languages have a secondary tangent function,
+			  which is often called atan2(), but there isn't one for sine and 
+			  cosine (at least in C++).
+			  atan2() takes 2 arguements usually, one for the opposite and one for
+			  the adjacent. atan2() also performs the necessary safety checks so
+			  we get a wanted result instead of a crash, error or glitch.
+			  So if we wanted to find the angle of a point away from the origin,
+			  as the angle moves around to become vertical along the Y axis, the
+			  angle would become 90 degrees. The atan2() function will give us a
+			  result that we would expect.
+			  Side note: most programming languages don't work directly with
+			  degrees, instead they work with radians.
+			  In convention, we specify these angles in radians or degrees,
+			  relative to the X axis. As we go around, we form a circle from the X
+			  axis starting at 0 or 360 degrees at say (4, 0) and when we get to
+			  (-4, 0) we have 180 degrees, when we get to (0, 4) we have 90 
+			  degrees and at (0, -4) we have 270 degrees.
+	
+			- Degrees are easy for us humans to understand but not for mathematics.
+			  Instead maths prefers Pi (3.14159265359).
+			  
+			  So in maths, 0 degrees is 0 radians,
+			  180 degrees is Pi,
+			  and a full circle is 2Pi.
+			  
+			  Therefore:
+			  
+			  90 degrees = Pi/2
+			  270 degrees = Pi * 1.5
+			  
+			  If we were to see these in terms of 2Pi being the entire 360 degrees
+			  of a circle, then:
+			  
+			  90 degrees  (1/4 of a circle)		= 2Pi	/	4
+			  180 degrees (1/2 of a circle)		= 2Pi	/	2
+			  270 degrees (3/4 of a circle)		= 2Pi	*	3/4 or 6Pi/4 or 3Pi/2
+			  360 degrees (1 circle) 	   		= 2Pi/1 or	2Pi
+			  
+			  What we can see here is that there is a linear relationship between
+			  radians and degrees:
+			  
+			  FORMULA FOR CONVERTING DEGREES INTO RADIANS:
+				
+				radians = (degrees / 180) * Pi
+				
+				degrees = (radians / Pi) * 180
+			
+			- With the subject of angles in game mathematics, there are some 
+			  things we just need to memorise. One of those things is:
+			  
+				tan(theta) = opposite/adjacent
+			
+			  We did this earlier. You can remember this as a calculation
+			  triangle of TOA:
+			  
+				
+					O
+				  T	  A
+				
+			  In a calculation triangle, you cover the one you want to find up
+			  and do the appropriate calculations, if something is directly next
+			  to something in the triangle, multiply them together, if they are
+			  on top of each other, divide the top one by the bottom one.
+			  So for example, if we we were trying to find the length of the 
+			  opposite, we would do tan(theta) * adjacentLength.
+			  If we were trying to find the length of the adjacent, we would do
+			  opposite / tan(theta)
+			  And to find the tangent of theta we would do the formula we were
+			  talking about earlier, tan(theta) = opposite/adjacent, we would then
+			  tan-1() the result.
+			  
+			  TOA is part of a phrase, SOH CAH TOA. In this phrase, O is the
+			  opposite, a is the adjacent and h is the hypoteneuse. As well as
+			  this, S is sin(), C is cos() and we know T is tan(). Use the
+			  calculation triangle rules we talked about just now to work out 
+			  the other 2 parts of the phrase (SOH and CAH):
+			  
+					O		 A
+				  S	  H	   C   H
+				
+			  If we know say the length of the opposite and the hypoteneuse, we
+			  would use SOH to work out the angle, if we knew the value of 
+			  cos(theta) and the length of the adjacent, we would use CAH to work
+			  out the length of the hypoteneuse. None of the three parts of the
+			  SOHCAHTOA phrase have 2 of the same components as any of the other
+			  parts of the phrase, so if we know 2 things, we would see which
+			  part, SOH, CAH or TOA has the 2 things we know in the calculation
+			  triangle.
+			  You would have learnt about SOHCAHTOA in school in the UK around 
+			  year 8 or 9 (equivalent to 7/8th grade in the US).
+			  
+			  
+			  
+SOURCES:
+
+	- https://www.youtube.com/watch?v=DPfxjQ6sqrc - essential mathematics for
+	  aspiring game developers

@@ -1,0 +1,415 @@
+	3D GRAPHICS CHAPTER 4:	TEXTURING AND DEPTH BUFFERS
+		
+		TEXTURING:
+			
+			- Texturing is applying an image to the surface of an object in game.
+			
+			- Texture coordinates are just like every other image un graphics
+			  programming, 0,0 in the top left and 1,1 in the bottom right.
+			  
+			- We somehow need to paint our square textures onto the triangles of
+			  the object. We do not want the texture to be applied hap-hazardly
+			  and for the texture to be split randomly over the triangles.
+			  
+			- Our object has triangles with vertices in 3D space (these are local
+			  to the model of the object) and our texture has an additional set
+			  of vertices in texture space.
+			  So say we have a square texture of some bricks and a cube to put
+			  this texture onto, me assume that we want the top left half of the
+			  texture on the top left half of the object.
+			  
+				DIAGRAM:
+				
+					TEXTURE
+					__________
+					|		 /|
+					|	A  /  |
+					|   / 	  |
+					|/	   B  |
+					-----------
+					
+					OBJECT FACE
+					
+					__________
+					|		 /|
+					|	A  /  |
+					|   / 	  |
+					|/	   B  |
+					-----------
+			
+			  So, if we specify a particular image to be the object's texture,
+			  and we look at the additional coordinates that we will add to the
+			  object, we can determine which parts of the texture we will map to
+			  the object.
+			
+			- The whole texture image does not need to be used up, any triangle
+			  of the object could be anywhere in the texture.
+			  This means we can manipulate texture coordinates to create 
+			  interesting effects.
+			  This also means we can have one texture that has many pictures
+			  inside of it and just map the object's coordinates to the specific
+			  parts of the texture.
+			  
+			- After adding additional texture information to the triangles, you 
+			  need to make sure that after every time you move a triangle around,
+			  you need to copy over the texture information.
+			  ALSO we need to remember to adjust the texture coordinates after 
+			  clipping.
+			  
+			  Say we have a triangle getting split by a clipping plane. The
+			  triangle is getting split in half then the rest of the triangle
+			  which is on the inside of the clipping plane is split into 
+			  triangles or is made smaller, this means the vertex positions
+			  have changed and so we need to adjust the texture coordinates
+			  to fit onto the triangle without having glitchy artifacts.
+			  
+			  Let's say we have a triangle with texture coordinates
+			  
+			  Vertex A = U1, V1 (on outside of clipping plane, so is to be 
+									clipped)
+			  Vertex B = U2, V2 (on insde of clipping plane, is to be kept
+								and to form new triangles out of)
+			  
+			  Point at which line AB intersects the clipping plane = 
+			  
+			  T (normalised value between A and B)
+			  
+			  new V1 = V1 + T(V2 - V1)
+			  new U2 = U1 + T(U2 - U1)
+			
+			- C++ Method for clipping with textures (same as Chapter 3: Cameras
+			  and Clipping but the below functions are modified)
+			  
+				// for explanation google how do lines intersect with planes
+				vec3d Vector_IntersectPlane(
+						vec3d& plane_p,
+						vec3d& plane_n, 
+						vec3d& lineStart,
+						vec3d& lineEnd,
+						float &t
+						)
+				{
+					plane_n = Vector_Normalise(plane_n);
+					float plane_d = -Vector_DotProduct(plane_n, plane_p);
+					float ad = Vector_DotProduct(lineStart, plane_n);
+					float bd = Vector_DotProduct(lineEnd, plane_n);
+					
+					t = (-plane_d - ad) / (bd - ad);          
+					// see Chapter 3
+					
+					vec3d lineStartToEnd = Vector_Sub(lineEnd, lineStart);
+					vec3d lineToIntersect = Vector_Mul(lineStartToEnd, t);
+					return Vector_Add(lineStart, lineToIntersect);
+				}
+				
+				int Triangle_ClipAgainstPlane(
+						vec3d plane_p,
+						vec3d plane_n,
+						triangle &in_tri,
+						triangle &out_tri1,
+						triangle &out_tri2
+						)
+				{
+					// Make sure plane normal is indeed normal
+					plane_n = Vector_Normalise(plane_n);
+
+					// Return signed shortest distance from point to plane,
+					// plane normal must be normalised
+					auto dist = [&](vec3d &p)
+					{
+						vec3d n = Vector_Normalise(p);
+						return (plane_n.x * p.x + plane_n.y * p.y + plane_n.z * p.z
+									- Vector_DotProduct(plane_n, plane_p));
+					};
+
+					// Create two temporary storage arrays to classify points 
+					// either side of plane. If distance sign is positive, point
+					// lies on "inside" of plane
+					vec3d* inside_points[3];  int nInsidePointCount = 0;
+					vec3d* outside_points[3]; int nOutsidePointCount = 0;
+					vec2d* inside_tex[3]; int nInsideTexCount = 0;
+					vec2d* outside_tex[3]; int nOutsideTexCount = 0;
+
+
+					// Get signed distance of each point in triangle to plane
+					float d0 = dist(in_tri.p[0]);
+					float d1 = dist(in_tri.p[1]);
+					float d2 = dist(in_tri.p[2]);
+
+					if (d0 >= 0) {
+						inside_points[nInsidePointCount++] = &in_tri.p[0];
+						inside_tex[nInsideTexCount++] = &in_tri.t[0]; }
+					else {
+						outside_points[nOutsidePointCount++] = &in_tri.p[0];
+						outside_tex[nOutsideTexCount++] = &in_tri.t[0];
+					}
+					if (d1 >= 0) {
+						inside_points[nInsidePointCount++] = &in_tri.p[1];
+						inside_tex[nInsideTexCount++] = &in_tri.t[1];
+					}
+					else {
+						outside_points[nOutsidePointCount++] = &in_tri.p[1];
+						outside_tex[nOutsideTexCount++] = &in_tri.t[1];
+					}
+					if (d2 >= 0) {
+						inside_points[nInsidePointCount++] = &in_tri.p[2];
+						inside_tex[nInsideTexCount++] = &in_tri.t[2];
+					}
+					else {
+						outside_points[nOutsidePointCount++] = &in_tri.p[2]; 
+						outside_tex[nOutsideTexCount++] = &in_tri.t[2];
+					}
+
+					// Now classify triangle points, and break the input triangle 
+					// into smaller output triangles if required. There are four
+					// possible outcomes...
+
+					if (nInsidePointCount == 0)
+					{
+						// All points lie on the outside of plane, so clip whole 
+						// triangle. It ceases to exist
+
+						return 0; // No returned triangles are valid
+					}
+
+					if (nInsidePointCount == 3)
+					{
+						// All points lie on the inside of plane, so do nothing
+						// and allow the triangle to simply pass through
+						out_tri1 = in_tri;
+
+						return 1; // Just the one returned original triangle is
+						// valid
+					}
+
+					if (nInsidePointCount == 1 && nOutsidePointCount == 2)
+					{
+						// Triangle should be clipped. As two points lie outside
+						// the plane, the triangle simply becomes a smaller 
+						// triangle
+
+						// Copy appearance info to new triangle
+						out_tri1.col =  in_tri.col;
+						out_tri1.sym = in_tri.sym;
+
+						// The inside point is valid, so keep that...
+						out_tri1.p[0] = *inside_points[0];
+						out_tri1.t[0] = *inside_tex[0];
+
+						// but the two new points are at the locations where the 
+						// original sides of the triangle (lines) intersect with 
+						// the plane
+						float t;
+						out_tri1.p[1] = Vector_IntersectPlane(plane_p, plane_n,
+										*inside_points[0], *outside_points[0], t);
+						out_tri1.t[1].u = t * (outside_tex[0]->u - inside_tex[0]->u)
+												+ inside_tex[0]->u;
+						out_tri1.t[1].v = t * (outside_tex[0]->v - inside_tex[0]->v)
+												+ inside_tex[0]->v;
+						out_tri1.t[1].w = t * (outside_tex[0]->w - inside_tex[0]->w)
+												+ inside_tex[0]->w;
+
+						out_tri1.p[2] = Vector_IntersectPlane(plane_p, plane_n,
+										*inside_points[0], *outside_points[1], t);
+						out_tri1.t[2].u = t * (outside_tex[1]->u - inside_tex[0]->u)
+												+ inside_tex[0]->u;
+						out_tri1.t[2].v = t * (outside_tex[1]->v - inside_tex[0]->v)
+												+ inside_tex[0]->v;
+						out_tri1.t[2].w = t * (outside_tex[1]->w - inside_tex[0]->w)
+												+ inside_tex[0]->w;
+
+						return 1; // Return the newly formed single triangle
+					}
+
+					if (nInsidePointCount == 2 && nOutsidePointCount == 1)
+					{
+						// Triangle should be clipped. As two points lie inside the
+						// plane, the clipped triangle becomes a "quad". 
+						// Fortunately, we can represent a quad with two new 
+						// triangles
+
+						// Copy appearance info to new triangles
+						out_tri1.col =  in_tri.col;
+						out_tri1.sym = in_tri.sym;
+
+						out_tri2.col =  in_tri.col;
+						out_tri2.sym = in_tri.sym;
+
+						// The first triangle consists of the two inside points and
+						// a new point determined by the location where one side of
+						// the triangle intersects with the plane
+						out_tri1.p[0] = *inside_points[0];
+						out_tri1.p[1] = *inside_points[1];
+						out_tri1.t[0] = *inside_tex[0];
+						out_tri1.t[1] = *inside_tex[1];
+
+						float t;
+						out_tri1.p[2] = Vector_IntersectPlane(plane_p, plane_n,
+										*inside_points[0], *outside_points[0], t);
+						out_tri1.t[2].u = t * (outside_tex[0]->u - inside_tex[0]->u)
+												+ inside_tex[0]->u;
+						out_tri1.t[2].v = t * (outside_tex[0]->v - inside_tex[0]->v)
+												+ inside_tex[0]->v;
+						out_tri1.t[2].w = t * (outside_tex[0]->w - inside_tex[0]->w)
+												+ inside_tex[0]->w;
+
+						// The second triangle is composed of one of he inside 
+						// points, a new point determined by the intersection of 
+						// the other side of the triangle and the plane, and the
+						// newly created point above
+						out_tri2.p[0] = *inside_points[1];
+						out_tri2.t[0] = *inside_tex[1];
+						out_tri2.p[1] = out_tri1.p[2];
+						out_tri2.t[1] = out_tri1.t[2];
+						out_tri2.p[2] = Vector_IntersectPlane(plane_p, plane_n,
+										*inside_points[1], *outside_points[0], t);
+						out_tri2.t[2].u = t * (outside_tex[0]->u - inside_tex[1]->u)
+												+ inside_tex[1]->u;
+						out_tri2.t[2].v = t * (outside_tex[0]->v - inside_tex[1]->v)
+												+ inside_tex[1]->v;
+						out_tri2.t[2].w = t * (outside_tex[0]->w - inside_tex[1]->w)
+												+ inside_tex[1]->w;
+						return 2; // Return two newly formed triangles which form
+								  // a quad
+					}
+				}
+			
+			- Now that clipping is handled, we have to write a new function that
+			  handles the drawing of textured triangles. This is because we will
+			  have to handle textured triangles on a pixel by pixel basis.
+			  
+			  It is important for us to choose a method that allows us to getting
+			  pixel by pixel access, because for every single pixel in the triangle,
+			  we're going to need to sample our texture. By sampling I mean getting
+			  the colour of that particular pixel. If you are working in the console
+			  like HC-3DGraphicsEngine, then the colour and symbol of that pixel.
+			  
+			  So the angle of drawing a triangle in this manner is pretty straight
+			  forward.
+			  
+			  1) given 3 arbituary coordinates that represent the triangle, sort
+			     these coordinates vertically so that the lowest Y value is at 
+				 the top of the screen.
+				 
+				 DIAGRAM:
+
+						x1, y1	
+							|\
+							| \
+							|  \
+							|   \
+							| 	 \
+					x2, y2	 \	  \
+								\  \
+								  \ \
+									\\
+								x3, y3
+							
+					- Where y1 <= y2 <= y3
+				 This is important because it tells us how many rows the triangle
+				 occupies.
+				  
+				 If we get the Y coordinate that is in the middle and draw a 
+				 horizontal line across the screen, we know this is a point 
+				 where we might have to change some of our calculations. So
+				 y2-y1 is quite useful, the same applies to y3-y2. We can use
+				 these to find out where to start and stop our algorithm in the 
+				 y axis.
+				 If our triangle was flat to begin with, like triangle B in the 
+				 below diagram, we only one half of this shape to draw.
+				  
+				 DIAGRAM:
+				  
+				  
+						x1, y1	
+							|\
+							| \
+							|  \
+							| A \
+							|____\
+					x2, y2	 \	B \
+								\  \
+								  \ \
+									\\
+								x3, y3
+				
+				 We can determine this flatness by looking at the difference
+				 between y1 and y2. If the distance is 0, we only have half a
+				 triangle to draw.
+			
+			  2) We now need to calculate the starting points of our horizontal
+			     scan lines. And given the information we have in the above diagram,
+				 This is quite easy to do.
+				 
+				 DIAGRAM:
+				 
+						x1, y1	
+							|\
+							| \
+						  A |  \
+							|   \
+							|____\ B
+					x2, y2	 \	  \
+								\  \
+								A \ \
+									\\
+								x3, y3
+				 
+				 
+				 We can assume that we have 2 lines ( A and B ) that make up our 
+				 triangle. It is easy to work out the gradients of A and B, it's
+				 a simple calculation:
+				 
+				 (y2 - y1) / (x2 - x1)	or	dy/dx
+				 
+				 This means for every step down the line we take, which we know
+				 is going to be an entire row at a time, there's a certain amount
+				 of x we need to move backward/forwards (depending on the direction
+				 the line is going), and so as we scroll through our scan line from
+				 top to bottom, we can work out where our starting point is (on 
+				 top line A), and similiarly we can work out our stopping point's
+				 position on line B.
+				 Of course, we don't fill in entre rows, we just loop through
+				 possible starting points to the end point.
+				 When we get to the y2 coordinate, we can see our lines hav
+				 changed, top line A is no longer needed. So we reuse the data
+				 structure we've got from line A and rethink about how A is
+				 calculated (to give us lower A).
+				 Fortunately we've already done all of this for B, we don't need to
+				 do it again, nothing has changed. The gradient for B just keeps 
+				 doing what it was doing before.
+				 But the shift on the X axis for lower A has now changed because the
+				 gradient of the line has changed. So we have to calculate that,
+				 then we can just scan across from lower A to B with a simple for
+				 loop, knowing the start and end point of our triangle (startU,
+				 startV and endU, endV).
+			
+			- Texture coordinates add additional requirements into this algorithm,
+			  but we can use the same algorithms we've used to calculate where we
+			  in pixel space on the screen, to calculate where we are in texel
+			  space in the texture. So in addition to having dx and dy step-sizes
+			  for pixels, we now have du and dv step-sizes for texture as well.
+			  This means we can calculate starting and ending points in texel space
+			  as well. But instead of filling in with one colour, we now linearly
+			  interpolate along the scan line in texel space. This means we need to
+			  count how many pixels there are in pixel space along this line and
+			  therefore we can use the count of pixels to get our effective T value
+			  (as talked about earlier in this chapter), when we're interpolating
+			  to work out where we are along the line in texel space, and then 
+			  sample the texture at that point.
+			  
+			- You may realise this method is not fully correct, but we'll get there
+			  in a bit.
+			  
+			- C++ method for scanning through triangles and sampling texture:
+			
+				
+			  
+				 
+				  
+
+SOURCES:
+
+	- https://www.youtube.com/watch?v=nBzCS-Y0FcY - Code It Yourself - 
+		  3D Graphics Engine Part#4 - Texturing and Depth Buffers
+    
